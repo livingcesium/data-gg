@@ -1,0 +1,559 @@
+import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import { useState, useEffect } from 'react'
+import Select from 'react-select'
+
+const backendPort = process.env.BACK_PORT || 9000
+
+function App() {
+  return (
+    <div className="App">
+      <div className='App-body'>
+      </div>
+    </div>
+  )
+}
+
+// Hooks
+
+const handleLogin = (event, onSuccess) => {
+  event.preventDefault()
+  const data = Object.fromEntries(new FormData(event.target).entries())
+  axios.get(`http://localhost:${backendPort}/getUser`, {params: data})
+    .then((res) => {
+      if(res.data){
+        alert('Logged in')
+        localStorage.clear()
+        localStorage.setItem('loggedInUser', res.data._id)
+        onSuccess()
+      }
+      else
+        alert('Wrong credentials')
+    })
+    .catch((err) => {
+      console.log(err)
+      alert('Error in Login')
+    })
+}
+
+const handleSignUp = (event, onSuccess) => {
+  event.preventDefault()
+  const data = Object.fromEntries(new FormData(event.target).entries())
+  axios.post(`http://localhost:${backendPort}/createUser`, data)
+    .then((res) => onSuccess())
+    .catch((err) => {
+      console.log(err)
+      alert('Error in Sign Up')})
+}
+
+const handleCreateProject = (event, proj_data) => {
+  event.preventDefault()
+  axios.post(`http://localhost:${backendPort}/createProject`, proj_data)
+    .then((res) => {
+      console.log(res)
+      alert('Project created')
+    })
+    .catch((err) => {
+      console.log(err)
+      alert('Error in creating project')
+    })
+
+};
+
+const handleCreateTeam = (event) => {
+  event.preventDefault()
+  const data = Object.fromEntries(new FormData(event.target).entries())
+  console.log(data)
+  axios.post(`http://localhost:${backendPort}/createTeam`, data)
+  .then((res) => {
+    console.log(res)
+    alert('Team created')
+  })
+  .catch((err) => {
+    console.log(err)
+    alert('Error in creating team')
+  })
+
+}
+
+// Components
+
+function Home() {
+  const navigate = useNavigate()
+  const loggedIn = localStorage.getItem('loggedInUser')
+  const handleSignOut = (event) => {
+    event.preventDefault()
+    localStorage.clear()
+    navigate('/log-in')
+  }
+  const elements = loggedIn ? 
+    <>
+      <p>{`Welcome ${loggedIn}!`}</p>
+      <button type="button" onClick={(event) => handleSignOut(event)}>Sign Out</button>
+    </>
+  : // else if logged out...
+    <>
+      <p>Already have an account? <Link to="/log-in">Login</Link></p> <br/>
+      <p>If not, sign up <Link to="/sign-up">here</Link>!</p>
+    </>
+    
+  return (
+    <div>
+      <Nav loggedIn = {loggedIn != null} signOut={handleSignOut}/>
+      <h1>Home</h1>
+      {elements}
+    </div>
+  )
+
+}
+
+function Nav({loggedIn, signOut}) {
+  const elements = loggedIn ?
+    <>
+      <Link to='/teams'>Teams</Link>
+      <Link to='/roster'>Manage Teams</Link>
+      <Link to='/projects'>Projects</Link>
+      <Link to='/user-story'>User Stories</Link>
+      <button onClick={signOut}>Sign Out</button>
+    </>
+  :
+    <>
+      <Link to='/log-in'>Log In</Link>
+      <Link to='/sign-up'>Sign Up</Link>
+    </>
+
+  return (
+    <nav>
+      {elements}
+    </nav>
+  )
+}
+
+function NewUserStory() {
+  const [projects, setProjects] = useState([])
+  useEffect(() => {
+    axios.get(`http://localhost:${backendPort}/getProjects`)
+    .then(res => {
+      console.log(res.data);
+      setProjects(res.data)
+    })
+    .catch(err => {
+      console.log(err);
+    })
+  }, [])
+
+  const handleNewStory = (event) => {
+    event.preventDefault()
+    const data = Object.fromEntries(new FormData(event.target).entries())
+    axios.post(`http://localhost:${backendPort}/createUserStory`, data)
+    .then(res => {
+      console.log(res)
+      alert('User Story created')
+    })
+    .catch(err => {
+      console.log(err)
+      alert('Error in creating user story')
+    })
+  }
+
+  const [project, setProject] = useState('')
+  const changeProject = (event) => {
+    console.log(event.target.value)
+    setProject(event.target.value)}
+
+  
+  return (
+    <div>
+      <form onSubmit={handleNewStory}>
+        <label htmlFor="proj_id">Project:</label><br/>
+        <select id="proj_id" name="proj_id" onChange={changeProject}>
+          <option value="">Select Project</option>
+          {projects.map((project, index) => {
+            console.log('???', project, project._id)
+            return (
+              <option key={index} value={project._id}>
+                {project.proj_name}
+              </option>
+            );
+          }
+          )}
+        </select><br/>
+        <UserStories proj_id={project}/><br/>
+        <label htmlFor='user_story'>User Story:</label><br/>
+        <textarea type='text' id='user_story' name='user_story' rows='4' cols='50'/><br/>
+        <label htmlFor='priority'>Priority:</label><br/>
+        <input type='number' id='priority' name='priority'/><br/>    
+        <input type='submit' value='Submit'/>      
+      </form>
+      <Link to='/home'>Go Home</Link>
+    </div>
+  )
+}
+
+function UserStories({proj_id}) {
+  const [userStories, setUserStories] = useState([])
+  useEffect(() => {
+    if(proj_id === '') return
+    console.log(proj_id)
+    axios.get(`http://localhost:${backendPort}/getUserStories`, {params: {proj_id: proj_id}})
+    .then(res => {
+      console.log(res.data);
+      setUserStories(res.data)
+    })
+    .catch(err => {
+      console.log(err);
+    })
+  }, [proj_id])
+  return (
+    <div>
+      <h1>Previous User Stories</h1>
+      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+        {userStories.map((story, index) => {
+            return (
+              <div key={index} style={{ paddingRight: '25px', maxWidth: '500px', overflow: 'hidden', wordWrap: 'break-word' }}>
+                <p>{story.user_story}</p>
+                <p>priority: {story.priority}</p>
+              </div>
+            )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function TeamRoster() {
+  const [teams, setTeams] = useState([])
+  const [users, setUsers] = useState([])
+  useEffect(() => {
+    axios.get(`http://localhost:${backendPort}/getTeams`)
+      .then((res) => {
+        console.log(res.data);
+        setTeams(res.data)
+      })
+    axios.get(`http://localhost:${backendPort}/getUsers`)
+    .then((res) => {
+      console.log(res.data);
+      setUsers(res.data)
+    })
+  }, [])
+
+  const userOptions = users.map((user) => {
+    return {label: user.firstname + user.lastname, value: user._id}
+  })
+
+  const [selectedUsers, setSelectedUsers] = useState([])
+  const handleAddToTeam = (event) => {
+    event.preventDefault()
+    const team_id = new FormData(event.target).get('team_id')
+    axios.post(`http://localhost:${backendPort}/teamEnroll`, {team_id: team_id, users: selectedUsers.map(user => user.value)})
+      .then((res) => {
+        console.log(res)
+        alert('Added to team')
+      })
+  }
+
+  return (
+    <div>
+      <h1>Add to team</h1>
+      <form onSubmit={handleAddToTeam}>
+
+        <label htmlFor="team_id">Team ID:</label><br/>
+        <select id="team_id" name="team_id">
+          <option value="">Select Team</option>
+          {teams.map((team, index) => (
+            <option key={index} value={team._id}>
+              {team.team_name}
+            </option>
+          ))}
+        </select>
+        
+        <br/>
+        <label htmlFor="user_id">User ID:</label><br/>
+        <Select
+          isMulti
+          value={selectedUsers}
+          onChange={setSelectedUsers}
+          options={userOptions}
+        />
+        
+        <br/>
+        <input type="submit" value="Add"/>
+      </form>
+      <Link to='/home'>Go Home</Link>
+    </div>
+  )
+}
+
+function TeamsView() {
+  const [teams, setTeams] = useState([])
+  const [memberTrigger, reload] = useState(false)
+  useEffect(() => {
+    axios.get(`http://localhost:${backendPort}/getTeams`)
+      .then((res) => {
+        console.log(res.data);
+        setTeams(res.data)
+      })
+  }, []);
+  const handleJoinTeam = (event, team_id) => {
+    event.preventDefault()
+    const user_id = localStorage.getItem('loggedInUser')
+    axios.post(`http://localhost:${backendPort}/teamEnroll`, {team_id: team_id, users: [user_id]})
+      .then((res) => {
+        reload(!memberTrigger)
+        console.log(res)
+        alert('Team joined')
+      })
+      .catch((err) => {
+        console.log(err)
+        alert('Error in joining team')
+      })
+  }
+  return (
+    <div>
+      <h1>Teams</h1>
+      <ul>
+        {teams.map((team, index) => (
+            <li key={index}>
+              {team.team_name}
+              <MemberList team_id={team._id} reloadOn = {memberTrigger}/>
+              <button onClick={(event) => handleJoinTeam(event, team._id)}>Join</button>              
+            </li>
+          ))}
+      </ul>
+      <Link to='/create-team'>Create Team </Link>
+      <Link to='/projects'>View Projects</Link><br/>
+      <Link to='/home'>Go Home</Link>
+    </div>
+  )
+}
+
+function MemberList({team_id, reloadOn}){
+  const [members, setMembers] = useState([])
+  useEffect(() => {
+    axios.get(`http://localhost:${backendPort}/getTeamMembers`, {params: {team_id: team_id}})
+    .then(res => {
+      console.log(res.data);
+      setMembers(res.data)
+    })
+    .catch(err => {
+      console.log(err);
+    })
+  }, [reloadOn]);
+  return (
+    <ul>
+      {members.map((member, index) => {
+        return <li key={index}>{`${member.firstname} ${member.lastname}`}</li>
+      })}
+    </ul>
+  )
+}
+
+function CreateTeam() {
+  return (
+    <div>
+      <h1>Create Team</h1>
+      <form onSubmit={handleCreateTeam}>
+        <label htmlFor="team_name">Team Name:</label><br/>
+        <input type="text" id="team_name" name="team_name"/><br/>
+        <br/>
+        <input type="submit" value="Create"/>
+      </form>
+      <Link to='/teams'>View Teams </Link>
+      <Link to='/projects'>View Projects</Link>
+      <Link to='/home'>Go Home</Link>
+    </div>
+  )
+}
+
+function ProjectView() {
+  const [projects, setProjects] = useState([])
+  useEffect(() => {
+    axios.get(`http://localhost:${backendPort}/getProjects`)
+    .then(res => {
+      console.log(res.data);
+      setProjects(res.data)
+    })
+    .catch(err => {
+      console.log(err);
+    })
+  }, []);
+
+
+  return (
+    <div>
+      <h1>Projects</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Project Name</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {projects.map((project, index) => (
+            <tr key={index}>
+              <td>{project.team_details.team_name}</td>
+              <td>{project.proj_name}</td>
+              <td>{project.proj_desc}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <Link to='/create-project'>Create Project </Link>
+      <Link to='/teams'>View Teams</Link><br/>
+      <Link to='/home'>Go Home</Link>
+    </div>
+  )
+}
+
+function LogIn() {
+  const navigate = useNavigate()
+  return (
+    <div>
+      <h1> Log In </h1>
+      <form onSubmit={(event) => handleLogin(event, () => navigate('/home'))}>
+        <label htmlFor="userid">User ID:</label><br/>
+        <input type="text" id="userid" name="username"/><br/>
+
+        <label htmlFor="password">Password:</label><br/>
+        <input type="password" id="password" name="password"/><br/>
+        <br/>
+        <input type="submit" value="Submit"/>
+        <Link to="/sign-up">Don't have an account?</Link><br/>
+        <Link to='/home'>Go Home</Link>
+      </form>
+    </div>
+  )
+}
+
+function SignUp() {
+
+  const navigate = useNavigate()
+
+  const mayRedirect = (event) => {
+    handleSignUp(event, () => navigate('/log-in'))
+  }
+
+  return (
+    <div>
+      <h1> Sign Up </h1>
+      <form onSubmit={mayRedirect}>
+        <label htmlFor="name-first">First Name </label>
+        <input type="text" id="name-first" name="firstname"/><br/>
+
+        <label htmlFor="name-last">Last Name </label>
+        <input type="text" id="name-last" name="lastname"/><br/>
+        <br/>
+        <label htmlFor="userid">User ID </label>
+        <input type="text" id="userid" name="username"/><br/>
+
+        <label htmlFor="password">Password </label>
+        <input type="password" id="password" name="password"/><br/>
+        <br/>
+        <input type="submit" value="Submit"/>
+
+        <Link to="/log-in">Already have an account?</Link><br/>
+        <Link to='/home'>Go Home</Link>
+      </form>
+    </div>
+  )
+}
+
+
+function CreateProject() {
+  // const [proj_name, setProjectName] = useState('');
+  // const [proj_desc, setProjectDescription] = useState('');
+  // const [prod_owner_id, setProductOwner] = useState('');
+  // const [mgr_id, setManager] = useState('');
+  // const [team_id, setTeam] = useState('');
+  const [project, setProject] = useState({
+    proj_name: '',
+    proj_desc: '',
+    prod_owner_id: '',
+    mgr_id: '',
+    team_id: ''
+  });
+
+  const updateProject = (changes) => {
+    setProject({...project, ...changes});
+  }
+
+  const [users, setUsers] = useState([])
+  const [teams, setTeams] = useState([])
+
+  useEffect(() => {
+    axios.get(`http://localhost:${backendPort}/getUsers`)
+    .then(function (response) {
+      console.log(response.data);
+      setUsers(response.data)
+    })
+    .catch(function (error) {
+      console.log(error);
+    })
+
+    axios.get(`http://localhost:${backendPort}/getTeams`)
+    .then(function (response) {
+      console.log(response.data);
+      setTeams(response.data)
+    })
+  }, []);
+
+
+  return (
+    <div>
+      <h1>Create Project</h1>
+      <form onSubmit={(event) => handleCreateProject(event, project)}>
+        <label htmlFor="proj_name">Project Name:</label><br/>
+        <input type="text" id="proj_name" name="proj_name" onChange={e => updateProject({proj_name: e.target.value})}/><br/>
+
+        <label htmlFor="proj_desc">Project Description:</label><br/>
+        <textarea id="proj_desc" name="proj_desc" onChange={e => updateProject({proj_desc: e.target.value})} /><br/>
+
+        <label htmlFor="prod_owner_id">Product Owner:</label><br/>
+        <select id="prod_owner_id" name="prod_owner_id" onChange={e => updateProject({prod_owner_id: e.target.value})}>
+          <option value="">Select Product Owner</option>
+          {users.map((user, index) => {
+            return (
+              <option key={index} value={user._id}>
+                {`${user.firstname} ${user.lastname}`}
+              </option>
+            );
+          })}
+        </select><br/>
+
+        <label htmlFor="mgr_id">Manager:</label><br/>
+        <select id="mgr_id" name="mgr_id" onChange={e => updateProject({mgr_id: e.target.value})} value={project.mgr_id}>
+          <option value="">Select Manager</option>
+          {users.map((user, index) => {
+            return (
+              <option key={index} value={user._id}>
+                {`${user.firstname} ${user.lastname}`}
+              </option>
+            );
+          })}
+        </select><br/>
+
+        <label htmlFor="team_id">Team:</label><br/>
+        <select id="team_id" name="team_id" onChange={e => updateProject({team_id: e.target.value})}>
+          <option value="">Select Team</option>
+          {teams.map((team, index) => {
+            return (
+              <option key={index} value={team._id}>
+                {`${team.team_name}`}
+              </option>
+            );
+          })}
+        </select><br/>
+        <br/>
+        <input type="submit" value="Create"/>
+      </form>
+      <Link to='/teams'>View Teams </Link>
+      <Link to='/projects'>View Projects</Link><br/>
+      <Link to='/home'>Go Home</Link>
+    </div>
+  )
+}
+
+
+export { App, LogIn, SignUp, CreateProject, CreateTeam, TeamsView, ProjectView, TeamRoster, Home, NewUserStory};
