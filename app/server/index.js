@@ -8,11 +8,12 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' })
 
 const File = require('./File.js')
-
+const Tag = require('./Tag.js')
+const Tagged = require('./Tagged.js')
 
 
 const middlewares = {
-    empty: (req, res, next) => next(),
+    empty: upload.none(),   //(req, res, next) => next(),
     uploadSingle: upload.single('file'),
 }
 
@@ -43,7 +44,7 @@ const endpoints = {
                 }
             }
         },
-        getResults: {
+        getFiles: {
             handler: async (req, res) => {
                 try {
                     const files = await File.find()
@@ -62,6 +63,42 @@ const endpoints = {
                 }
                 catch (error) {
                     res.status(500).send(error)
+                }
+            }
+        },
+        getTag: {
+            handler: async (req, res) => {
+                try {
+                    const tag = await Tag.findOne(req.query)
+                    res.send(tag)
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send(error)
+                }
+            }    
+        },
+        getTags: {
+            handler: async (req, res) => {
+                try {
+                    const tags = await Tag.find(req.query)
+                    res.send(tags)
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send(error)
+                }
+            }
+        },
+        searchFiles: {
+            handler: async (req, res) => {
+                try {
+                    const taggings = await Tagged.find().populate('tag_id')
+                    var files
+                    for (const tag of req.query.tags) {
+                        
+                    }
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send
                 }
             }
         }
@@ -88,17 +125,65 @@ const endpoints = {
                         file_name: originalname,
                         file_size: size,
                         data: buffer,
-                        uploader_id: req.body.uploader_id
+                        uploader_id: req.params.uploader_id
                     });
                     await file.save();
-                    res.send('File uploaded successfully');
+                    console.log(file)
+                    res.send(file);
                 } catch (error) {
                     console.error(error);
                     res.status(500).send('Error uploading file');
                 }
-            }, middleware: middlewares.uploadSingle
-        }
-    }
+            }, middleware: middlewares.uploadSingle, urlParams: 'uploader_id'
+        },
+        createTag: {
+            handler: async (req, res) => {
+                if(!req.body.tags)
+                    try {
+                        const tag = new Tag(req.body)
+                        await tag.save()
+                        res.send(tag)
+                    } catch (error) {
+                        console.log(error)
+                        res.status(500).send(error)
+                    } 
+                else 
+                    try {
+                        const tags = JSON.parse(req.body.tags)
+                        const tagList = tags.map(tag => new Tag(tag))
+                        await Tag.insertMany(tagList)
+                        res.send(tagList)
+                    } catch (error) {
+                        console.log(error)
+                        res.status(500).send(error)
+                    }
+            }
+        },
+        tagFile: {
+            handler: async (req, res) => {
+                if(!req.body.taggings) 
+                    try {
+                        console.log(req.body)
+                        const tagged = new Tagged(req.body)
+                        await tagged.save()
+                        res.send(tagged)
+                    } catch (error) {
+                        console.log(error)
+                        res.status(500).send(error)
+                    } 
+                else 
+                    try {
+                        const taggings = JSON.parse(req.body.taggings)
+                        const taggedList = taggings.map(tagging => new Tagged(tagging))
+                        await Tagged.insertMany(taggedList)
+                        res.send(taggedList)
+                    } catch (error) {
+                        console.log(error)
+                        res.status(500).send(error)
+                    }
+            }
+        },
+    },
     
 }
 
@@ -125,7 +210,8 @@ const createEndpoints = () => {
         for (const name in endpoints[method]) {
             // app[ get/post ]() == app.get()/post()
             const endpoint = endpoints[method][name]
-            app[method](`/${name}`, endpoint.middleware ?? middlewares.empty, endpoint.handler)
+            const urlParams = endpoint.urlParams ? `/:${endpoint.urlParams}` : ''
+            app[method](`/${name}${urlParams}`, endpoint.middleware ?? middlewares.empty, endpoint.handler)
         }
     }
 }

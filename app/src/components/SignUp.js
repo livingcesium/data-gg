@@ -8,7 +8,7 @@ function SignUp() {
   return (
     <div>
         <h1>Sign Up</h1>
-        <form onSubmit={(handleSignUp) => handleSignUp(handleSignUp, () => navigate('/log-in'))}>
+        <form onSubmit={() => handleSignUp(handleSignUp, () => navigate('/log-in'))}>
             <label htmlFor="name-first">First Name</label><br/>
             <input type="text" id="name-first" name="firstname"/><br/>
             <label htmlFor="name-last">Last Name</label><br/>
