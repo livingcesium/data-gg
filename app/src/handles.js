@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { saveAs } from 'file-saver';
 import { useNavigate } from 'react-router-dom';
 
 const backendPort = process.env.BACK_PORT || 9000;
@@ -57,6 +58,18 @@ export const handleUpload = async (file, uploader_id) => {
   }
 
 };
+
+export const handleDownload = (file_id, file_name) => {
+  axios.get(`http://localhost:${backendPort}/getFileData/${file_id}`, { responseType: 'blob' })
+    .then((res) => {
+      console.log(res);
+      saveAs(res.data, file_name)
+    })
+    .catch((err) => {
+      console.log(err);
+      alert('Error in downloading file');
+    });
+}
 
 export const handleCreateTags = async (tagPairs, author_id) => {
   if (!tagPairs.length)

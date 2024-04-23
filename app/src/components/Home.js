@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Nav from './Nav'
 import { handleSignOut, handleUpload, handleCreateTags, handleGetTag, handleGetTags, handleAttachTags } from '../handles'
 import { Grid, Button, TextField } from '@mui/material'
@@ -76,9 +76,6 @@ function UploadPrompt({closePrompt, user_id}){
   const removeTag = (tag) => {
     setTagOptions(tagOptions.map(group => group.filter((tagPair) => tagPair.tag._id !== tag._id)))
   }
-
-
-
   
   return (
     <Prompt container justifyContent="center" alignItems="center">
@@ -103,6 +100,7 @@ function UploadPrompt({closePrompt, user_id}){
         }}>
           <label>
             <input type="file" onChange={(event) => {
+              console.log(event.target.files[0])
               setFile(event.target.files[0])
             }}/>
           </label>
@@ -142,9 +140,13 @@ function SearchBar() {
 
   const navigate = useNavigate()
   const handleSubmit = (event) => {
+    const params = new URLSearchParams({
+      query: values.query,
+    })
+    values.selected.forEach(tag => params.append('tags', tag))
     event.preventDefault()
     console.log(values)
-    navigate(`/data?query=${values.query}&tags=${values.selected.join(',')}`) // TODO: Make use of this in DataView.js to display results
+    navigate(`/data?${params.toString()}`) // TODO: Make use of this in DataView.js to display results
   }
 
   return (

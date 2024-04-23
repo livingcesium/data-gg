@@ -5,11 +5,12 @@ const User = require('./User')
 const app = express()
 const cors = require('cors')
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' })
+const upload = multer({ storage: multer.memoryStorage() })
 
 const File = require('./File.js')
 const Tag = require('./Tag.js')
 const Tagged = require('./Tagged.js')
+const { default: mongoose } = require('mongoose')
 
 
 const middlewares = {
@@ -91,17 +92,69 @@ const endpoints = {
         searchFiles: {
             handler: async (req, res) => {
                 try {
-                    const taggings = await Tagged.find().populate('tag_id')
-                    var files
-                    for (const tag of req.query.tags) {
-                        
+                    await Tagged.find().populate('tag_id')
+                    const matches = {}
+                    console.log(req.query.tagPairs)
+                    for (const {tag_id, value} of req.query.tagPairs) {
+                        var match
+                        if(!tag_id.name){
+                            match = await Tagged.find().populate('file_id', '-data').populate('tag_id')
+                        } else {
+                            mongoose.set('debug', true)
+                            const foundTag = await Tag.findOne({name: tag_id.name})
+                            match = await Tagged.find({'tag_id': foundTag._id, value: value }).populate('file_id', '-data').populate('tag_id')
+                            console.log(match)
+                            mongoose.set('debug', false)
+                        }
+                        for (const m of match) {
+                            const fileId = m.file_id._id
+                            if(!matches[fileId]){
+                                console.log(m.file_id)
+                                const uploader = await User.findById(m.file_id.uploader_id)
+                                console.log("!!!", uploader)
+                                matches[fileId] = {file: {...m.file_id.toObject(), uploader: {username: uploader.username, _id: m.file_id.uploader_id}}, tags: {}}
+                            }
+                            if(m.tag_id.name){
+                                if(matches[fileId].tags)
+                                    matches[fileId].tags = {...matches[fileId].tags,
+                                        [m.tag_id.name]: {tag: m.tag_id.toObject(), value: m.value, _id: m._id},
+                                    }
+                                else matches[fileId].tags = {[m.tag_id.name]: {tag: m.tag_id.toObject(), value: m.value, _id: m._id}}
+                            }
+                            
+                            if (typeof matches[fileId].tags["name"] === undefined){
+                                const nameTag = await Tagged.findOne({ 'tag_id.name': "name", 'file_id._id': fileId})
+                                console.log(nameTag)
+                                matches[fileId].tags["name"] = {tag: nameTag.tag_id.toObject(), value: nameTag.value, _id: nameTag._id}
+                            }
+                
+                        }
+                            //matches.push(...taggings.filter(t => t.tag_id.name === tag_id.name && t.value === value).populate('file_id')) // TODO: make second condition changeable to >, <, etc.
                     }
+
+                    console.log(matches)
+                    res.send(matches)
                 } catch (error) {
                     console.log(error)
                     res.status(500).send
                 }
             }
-        }
+        },
+        getFileData: {
+            handler: async (req, res) => {
+                try {
+                    const file = await File.findById(req.params.file_id)
+                    res.set({
+                        'Content-Type': file.mimetype,
+                        'Content-Disposition': `attachment; filename=${file.file_name}`,
+                    })
+                    res.send(file.data)
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send(error)
+                }
+            }, urlParams: 'file_id'
+        },
     },
     post: {
         createUser: {
@@ -128,7 +181,6 @@ const endpoints = {
                         uploader_id: req.params.uploader_id
                     });
                     await file.save();
-                    console.log(file)
                     res.send(file);
                 } catch (error) {
                     console.error(error);
