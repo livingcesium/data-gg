@@ -8,12 +8,14 @@ function LogIn() {
     <div>
       <h1>Log In</h1>
       <form onSubmit={(event) => handleLogin(event, () => navigate('/home'))}>
-        <label htmlFor="userid">User ID:</label><br/>
-        <input type="text" id="userid" name="username"/><br/>
-        <label htmlFor="password">Password:</label><br/>
-        <input type="password" id="password" name="password"/><br/>
-        <br/>
-        <input type="submit" value="Submit"/>
+        <div>
+        <input className = "Text1" type="text" id="userid" name="username" placeholder = "User ID" /><br/>
+
+        <input className = "Text1" type="password" id="password" name="password" placeholder = "Password"/><br/>
+        
+        <input className = "SubmitButton" type="submit" value="Submit"/>
+
+        </div>
         <Link to="/sign-up">Don't have an account?</Link><br/>
         <Link to='/home'>Go Home</Link>
       </form>

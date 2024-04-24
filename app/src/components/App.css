@@ -1,0 +1,44 @@
+.Text1{
+    display: block; /* Makes sure the input fields are block elements */
+    margin: 10px auto; /* Centers the input fields horizontally and adds vertical spacing */
+    width: 70%; /* Sets the width of the input field */
+    max-width: 300px; /* Prevents the input fields from stretching too wide */
+    padding: 10px 20px; /* Adds padding to the inputs */
+    border-radius: 30px; /* Rounded corners for the input fields */
+    border: 1px solid #ccc; /* border for the inputs */
+    background-color: #f8f8f8; /* Light background color for the input */
+    color: #333; /* Dark text color for visibility */
+    font-size: 16px; /* Sets the font size */
+    outline: none; /* Removes the outline to maintain the style on focus */
+  }
+
+  .SubmitButton {
+    padding: 10px 20px; /* padding for button size */
+    border-radius: 30px; /* made the value high for an oval shape */
+    border: none; /* No default border */
+    background-color: #007bff; /* Background color of the button */
+    color: white; /* Text color */
+    font-size: 16px; /* Font Size */
+    cursor: pointer; /* Changes cursor to pointer on hover */
+    outline: none; /* Removes the outline */
+    transition: background-color 0.3s; /* Smooth transition for hover effect */
+  }
+  
+  .SubmitButton:hover {
+    background-color: #0056b3; /* Darker shade for hover effect */
+  }
+
+  .List{
+    text-align: left;
+    display: block; /* input fields are block elements */
+    margin: 10px auto; /* Centers the input fields horizontally and adds vertical spacing */
+    width: 70%; /* width of the input field */
+    max-width: 300px; /* Prevents the input fields from stretching too wide */
+    padding: 10px 20px; /* Adds padding to the inputs */
+    border-radius: 30px; /* Rounded corners for the input fields */
+    border: 1px solid #ccc; /* border  */
+    background-color: rgb(181, 218, 249); /* background color */
+    color: #000000; /* Text Color  */
+    font-size: 16px; /* font size */
+    outline: none; /* Removes the outline */
+  }
