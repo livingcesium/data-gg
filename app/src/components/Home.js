@@ -87,6 +87,7 @@ function UploadPrompt({closePrompt, user_id}){
           const nameTag = {tag: {name: "name", description:""/* normally get this value from a field */}, value: event.target.given_name.value}
           
           const tagPairs = await checkTags([...tagOptions, nameTag]) // chosen tags => { existing: [...], new: [...] }
+          
           const uploaded = await handleUpload(file, user_id)
           console.log(uploaded)
           

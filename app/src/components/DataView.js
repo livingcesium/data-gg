@@ -6,6 +6,7 @@ import { handleDownload } from '../handles';
 function DataView() {
   const [results, setResults] = useState([])
   const backendPort = process.env.BACK_PORT || 9000
+  const loggedIn = localStorage.getItem('loggedInUser')
   
   const query = new URLSearchParams(useLocation().search)
   useEffect(() => {
@@ -39,14 +40,14 @@ function DataView() {
             <th>Download</th>
           </tr>
         </thead>
-        <Results content={results}/>
+        <Results content={results} recipient_id = {loggedIn || ""}/>
       </table>
       <Link to='/home'>Go Home</Link>
     </div>
   );
 }
 
-function Results({content}){
+function Results({content, recipient_id}){
   return (
     <tbody>
       {content.map(({file, tags}) => (
@@ -58,7 +59,7 @@ function Results({content}){
           <td>{file.uploader.username}</td>
           <td><button onClick={(event) => {
             event.preventDefault()
-            handleDownload(file._id, file.file_name)
+            handleDownload(file._id, file.file_name, recipient_id)
           }}>Download Dataset</button></td>
 
         </tr>

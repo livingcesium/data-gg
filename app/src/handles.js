@@ -59,8 +59,8 @@ export const handleUpload = async (file, uploader_id) => {
 
 };
 
-export const handleDownload = (file_id, file_name) => {
-  axios.get(`http://localhost:${backendPort}/getFileData/${file_id}`, { responseType: 'blob' })
+export const handleDownload = (file_id, file_name, user_id) => {
+  axios.get(`http://localhost:${backendPort}/getFileData/${file_id}/${user_id}`, { responseType: 'blob' })
     .then((res) => {
       console.log(res);
       saveAs(res.data, file_name)
@@ -137,5 +137,16 @@ export const handleGetTags = async (query) => {
   } catch (err) {
     console.log(err);
     alert('Error in getting tags');
+  }
+}
+
+export const handleUpdateTransactions = async (query) => {
+  try {
+    const res = await axios.get(`http://localhost:${backendPort}/getTransactions`, {params: query});
+    console.log(res);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+    alert('Error in getting transactions');
   }
 }

@@ -10,6 +10,7 @@ const upload = multer({ storage: multer.memoryStorage() })
 const File = require('./File.js')
 const Tag = require('./Tag.js')
 const Tagged = require('./Tagged.js')
+const Transaction = require('./Transaction.js')
 const { default: mongoose } = require('mongoose')
 
 
@@ -148,13 +149,26 @@ const endpoints = {
                         'Content-Type': file.mimetype,
                         'Content-Disposition': `attachment; filename=${file.file_name}`,
                     })
+
+                    await Transaction.create({file_id: file._id, user_id: req.params.recipient_id})
                     res.send(file.data)
                 } catch (error) {
                     console.log(error)
                     res.status(500).send(error)
                 }
-            }, urlParams: 'file_id'
+            }, urlParams: 'file_id/:recipient_id'
         },
+        getTransactions: {
+            handler: async (req, res) => {
+                try {
+                    const transactions = await Transaction.find(req.params).populate('user_id')
+                    res.send(transactions)
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send(error)
+                }
+            }
+        }
     },
     post: {
         createUser: {
@@ -181,6 +195,9 @@ const endpoints = {
                         uploader_id: req.params.uploader_id
                     });
                     await file.save();
+
+                    await Transaction.create({up: true, file_id: file._id, user_id: req.params.uploader_id})
+
                     res.send(file);
                 } catch (error) {
                     console.error(error);
