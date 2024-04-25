@@ -1,20 +1,28 @@
 import React from "react";
 import { Outlet, Link } from "react-router-dom";
 
-const Nav = () => {
+export default function Nav({ loggedIn, signOut }) {
+  const elements = loggedIn ? (
+    <>
+      <button onClick={signOut}>Sign Out</button>
+    </>
+  ) : (
+    <>
+      
+    </>
+  );
+
   return (
     <>
       <nav>
-      <Link to='/log-in'>Log In</Link>
+        <Link to='/data'>Browse</Link>
+        <Link to='/log-in'>Log In</Link>
       <Link to='/sign-up'>Sign Up</Link>
       <Link to='/Admin'>Admin</Link>
-      <Link to='/data'>Browse</Link>
+        {elements}
       </nav>
 
       <Outlet />
     </>
   );
-};
-
-export default Nav;
-
+}
