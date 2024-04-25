@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { handleSignUp } from '../handles'; // Ensure this path is correct based on your project structure
+import { handleSignUp } from '../handles'; 
 import './App.css';
 
 function SignUp() {
