@@ -1,3 +1,8 @@
+.Page{
+    padding-top: 150px; /* Adds space at the top */
+
+}
+
 .Text1{
     display: block; /* Makes sure the input fields are block elements */
     margin: 10px auto; /* Centers the input fields horizontally and adds vertical spacing */
@@ -8,8 +13,8 @@
     border: 1px solid #ccc; /* border for the inputs */
     background-color: #f8f8f8; /* Light background color for the input */
     color: #333; /* Dark text color for visibility */
-    font-size: 16px; /* Sets the font size */
-    outline: none; /* Removes the outline to maintain the style on focus */
+    font-size: 16px; /* font size */
+    outline: none; /* Removes the outline */
   }
 
   .SubmitButton {
@@ -42,3 +47,45 @@
     font-size: 16px; /* font size */
     outline: none; /* Removes the outline */
   }
+
+  nav {
+    height: 90px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    background-color: #000000;
+    width: 100%;
+    
+  }
+
+  .NavText {
+    color: white;
+    text-decoration: none; /* Removes underline */
+    font-weight: bold; /* Makes text bold */
+  }
+
+  .Nav2 {
+ 
+
+    height: 90px;
+    display: flex;
+    align-items: center;
+    background-color: #000000;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    left:0;
+    justify-content: center;
+  }
+
+  .BG1 {
+
+    width: 100%; /* full width */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    object-fit: cover; /* Cover the available space without losing aspect ratio */
+    height: calc(100vh - 180px); /* Subtract the combined height of the two navbars */
+}
