@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect } from 'react'
 import Select from 'react-select'
 
-const backendPort = process.env.BACK_PORT || 9000
+const backendPort = process.env.REACT_APP_BACK_PORT || 9000
 
 function App() {
   return (

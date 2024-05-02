@@ -1,19 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import { handleDownload } from '../handles';
+import React, { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import axios from 'axios'
+import { handleDownload } from '../handles'
 
 function DataView() {
   const [results, setResults] = useState([])
-  const backendPort = process.env.BACK_PORT || 9000
+  const backendPort = process.env.REACT_APP_BACK_PORT || 9000
+  console.log(process.env.REACT_APP_BACK_PORT, process.env)
   const loggedIn = localStorage.getItem('loggedInUser')
   
   const query = new URLSearchParams(useLocation().search)
   useEffect(() => {
     console.log(results)
     const searchName = query.get('query')
-    const searchQuery = query.getAll('tags').length ? query.getAll('tags'): []
-    const searchTags = [...searchQuery, searchName ? {tag_id: {name: "name"}, value : searchName} : {tag_id : {name: ""}, value : ""}]
+    const searchQuery = query.getAll('tags').length ? JSON.parse(query.getAll('tags')): []
+    const defaultSearch = searchQuery ? [] : [{tag : {name: ""}, value : ""}]
+
+    const searchTags = [...searchQuery, ...(searchName ? [{tag: {name: "name"}, value : searchName}] : defaultSearch)]
     axios.get(`http://localhost:${backendPort}/searchFiles`, {params: {tagPairs: searchTags}})
       .then(res => {
         console.log(Object.values(res.data))

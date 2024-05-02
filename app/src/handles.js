@@ -2,7 +2,7 @@ import axios from 'axios';
 import { saveAs } from 'file-saver';
 import { useNavigate } from 'react-router-dom';
 
-const backendPort = process.env.BACK_PORT || 9000;
+const backendPort = process.env.REACT_APP_BACK_PORT || 9000;
 
 export const handleLogin = (event, onSuccess) => {
   event.preventDefault();
@@ -60,7 +60,7 @@ export const handleUpload = async (file, uploader_id) => {
 };
 
 export const handleDownload = (file_id, file_name, user_id) => {
-  axios.get(`http://localhost:${backendPort}/getFileData/${file_id}/${user_id}`, { responseType: 'blob' })
+  axios.get(`http://localhost:${backendPort}/getFileData/${file_id}/${user_id || 0}`, { responseType: 'blob' })
     .then((res) => {
       console.log(res);
       saveAs(res.data, file_name)

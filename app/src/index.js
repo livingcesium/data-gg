@@ -6,6 +6,7 @@ import Home from './components/Home'
 import LogIn from './components/LogIn'
 import SignUp from './components/SignUp'
 import DataView from './components/DataView'
+import Admin from './components/Admin'
 // import CreateProject from './components/CreateProject';
 // import CreateTeam from './components/CreateTeam';
 // import TeamsView from './components/TeamsView';
@@ -22,6 +23,7 @@ const router = createBrowserRouter(
       <Route path="/sign-up" element={<SignUp />} />
       <Route path="/data" element={<DataView />} />
       <Route path="/home" element={<Home />} />
+      <Route path="/admin" element={<Admin />} />
       {/* <Route path="/create-project" element={<CreateProject />} />
       <Route path="/teams" element={<TeamsView/>} />
       <Route path="/create-team" element={<CreateTeam />} />

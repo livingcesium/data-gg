@@ -11,6 +11,7 @@ const File = require('./File.js')
 const Tag = require('./Tag.js')
 const Tagged = require('./Tagged.js')
 const Transaction = require('./Transaction.js')
+const Admin = require('./Admin.js')
 const { default: mongoose } = require('mongoose')
 
 
@@ -95,14 +96,14 @@ const endpoints = {
                 try {
                     await Tagged.find().populate('tag_id')
                     const matches = {}
-                    console.log(req.query.tagPairs)
-                    for (const {tag_id, value} of req.query.tagPairs) {
+                    console.log("params:", req.query.tagPairs)
+                    for (const {tag, value} of req.query.tagPairs) {
                         var match
-                        if(!tag_id.name){
+                        if(!tag.name){
                             match = await Tagged.find().populate('file_id', '-data').populate('tag_id')
                         } else {
                             mongoose.set('debug', true)
-                            const foundTag = await Tag.findOne({name: tag_id.name})
+                            const foundTag = await Tag.findOne({name: tag.name})
                             match = await Tagged.find({'tag_id': foundTag._id, value: value }).populate('file_id', '-data').populate('tag_id')
                             console.log(match)
                             mongoose.set('debug', false)
@@ -112,23 +113,24 @@ const endpoints = {
                             if(!matches[fileId]){
                                 console.log(m.file_id)
                                 const uploader = await User.findById(m.file_id.uploader_id)
-                                console.log("!!!", uploader)
+                                console.log("uploaded by: ", uploader)
                                 matches[fileId] = {file: {...m.file_id.toObject(), uploader: {username: uploader.username, _id: m.file_id.uploader_id}}, tags: {}}
                             }
                             if(m.tag_id.name){
-                                if(matches[fileId].tags)
+                                if(matches[fileId].tags){
                                     matches[fileId].tags = {...matches[fileId].tags,
                                         [m.tag_id.name]: {tag: m.tag_id.toObject(), value: m.value, _id: m._id},
                                     }
-                                else matches[fileId].tags = {[m.tag_id.name]: {tag: m.tag_id.toObject(), value: m.value, _id: m._id}}
+                                }
                             }
-                            
-                            if (typeof matches[fileId].tags["name"] === undefined){
-                                const nameTag = await Tagged.findOne({ 'tag_id.name': "name", 'file_id._id': fileId})
-                                console.log(nameTag)
-                                matches[fileId].tags["name"] = {tag: nameTag.tag_id.toObject(), value: nameTag.value, _id: nameTag._id}
+
+                            console.log(matches[fileId].tags["name"])
+                            if (typeof matches[fileId].tags["name"] === "undefined"){
+                                const nameTag = await Tag.findOne({name: "name"})
+                                const named = await Tagged.findOne({ 'tag_id': nameTag._id, 'file_id': fileId}).populate('tag_id')
+                                console.log("NAME:", named)
+                                matches[fileId].tags["name"] = {tag: nameTag, value: named.value, _id: named._id}
                             }
-                
                         }
                             //matches.push(...taggings.filter(t => t.tag_id.name === tag_id.name && t.value === value).populate('file_id')) // TODO: make second condition changeable to >, <, etc.
                     }
@@ -149,8 +151,8 @@ const endpoints = {
                         'Content-Type': file.mimetype,
                         'Content-Disposition': `attachment; filename=${file.file_name}`,
                     })
-
-                    await Transaction.create({file_id: file._id, user_id: req.params.recipient_id})
+                    const details = parseInt(req.params.recipient_id) != 0 ? {file_id: file._id, user_id: req.params.recipient_id} : {file_id: file._id}
+                    await Transaction.create(details)
                     res.send(file.data)
                 } catch (error) {
                     console.log(error)
@@ -163,6 +165,17 @@ const endpoints = {
                 try {
                     const transactions = await Transaction.find(req.params).populate('user_id')
                     res.send(transactions)
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send(error)
+                }
+            }
+        },
+        getAdmin: {
+            handler: async (req, res) => {
+                try {
+                    const admin = await Admin.findOne(req.query)
+                    res.send(admin)
                 } catch (error) {
                     console.log(error)
                     res.status(500).send(error)

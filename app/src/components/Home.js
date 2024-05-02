@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Nav from './Nav'
+import SearchBar from './SearchBar'
 import { handleSignOut, handleUpload, handleCreateTags, handleGetTag, handleGetTags, handleAttachTags } from '../handles'
-import { Grid, Button, TextField } from '@mui/material'
+import { Grid, Button, TextField, CircularProgress } from '@mui/material'
+import { Autocomplete, Chip } from '@mui/material'
 import { styled } from '@mui/system'
+import axios from 'axios'
 
 
 function Home() {
@@ -11,13 +14,27 @@ function Home() {
   const loggedIn = localStorage.getItem('loggedInUser')
   const redirectAfterSignOut = (event) => handleSignOut(event, () => navigate('/log-in'))
   const [uploadOpen, setUploadOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  useEffect(() => {
+    axios.get(`http://localhost:${process.env.REACT_APP_BACK_PORT || 9000}/getAdmin`, { params: { user_id: loggedIn } })
+        .then(response => {
+            if (response.data) {
+                setIsAdmin(true);
+                localStorage.setItem('admin', response.data.user_id);
+            }
+        })
+        .catch(error => {
+            console.error('There was an error fetching admin data!', error);
+        })
+  }, [])
+  
 
   const elements = loggedIn ? 
     <>
       <p>{`Welcome ${loggedIn}!`}</p>
+      <button type="button" onClick={redirectAfterSignOut}>Sign Out</button> { }
       <button type="button" onClick={() => setUploadOpen(true)}>Upload Data</button><br/>
-      <br/><SearchBar />
-      <button type="button" onClick={redirectAfterSignOut}>Sign Out</button>
+
     </>
   : 
     <>
@@ -28,9 +45,10 @@ function Home() {
   return (
     <div>
       {uploadOpen && <UploadPrompt user_id={loggedIn} closePrompt={() => {setUploadOpen(false)}}/>}
-      <Nav loggedIn={loggedIn != null} signOut={redirectAfterSignOut}/>
+      <Nav loggedIn={loggedIn != null} signOut={redirectAfterSignOut} isAdmin={isAdmin}/>
       <h1>Home</h1>
-      {elements}
+      {elements}<br/>
+      <SearchBar />
     </div>
   );
 }
@@ -54,11 +72,23 @@ const Backdrop = styled(Grid)({
 
 function UploadPrompt({closePrompt, user_id}){
   const [file, setFile] = useState(null)
-  const [tagOptions, setTagOptions] = useState([])
-  const includeTag = ({tag, value}) => {
-    console.log(tagOptions)
-    setTagOptions([...tagOptions, {tag: tag, value: value}])
-  }
+  const [tags, setTags] = useState({options: [], selected: []})
+  const [assigns, setAssigns] = useState(new Map()) // {tag obj -> value}
+
+  const [loading, setLoading] = useState(false)
+  
+  useEffect(() => {
+    axios.get(`http://localhost:${process.env.REACT_APP_BACK_PORT || 9000}/getTags`, {params: { name: { $ne: 'name' }}})
+    .then(res => {
+      console.log(res.data)
+      setTags({...tags, options: res.data})
+    })
+    .catch(error => {
+      
+    })
+  }, []);
+
+
   const checkTags = async (tagPairs) => {
     const existing = []
     const newTags = []
@@ -79,15 +109,18 @@ function UploadPrompt({closePrompt, user_id}){
   
   return (
     <Prompt container justifyContent="center" alignItems="center">
-      <Backdrop item>
+      
+      {loading ? <CircularProgress/> : <Backdrop item>
         <h1>Upload Data</h1>
         <form onSubmit={ async (event) => {
           console.log(user_id)
           event.preventDefault()
+          setLoading(true)
           const nameTag = {tag: {name: "name", description:""/* normally get this value from a field */}, value: event.target.given_name.value}
           
-          const tagPairs = await checkTags([...tagOptions, nameTag]) // chosen tags => { existing: [...], new: [...] }
-          
+          console.log("<<DD>>", [...Array.from(assigns).map(([tag, value]) => ({tag: tag, value: value})) , nameTag])
+          const tagPairs = await checkTags([...Array.from(assigns).map(([tag, value]) => ({tag: tag, value: value})) , nameTag]) // chosen tags => { existing: [...], new: [...] }
+          console.log(tagPairs)
           const uploaded = await handleUpload(file, user_id)
           console.log(uploaded)
           
@@ -96,9 +129,11 @@ function UploadPrompt({closePrompt, user_id}){
           try {
             handleAttachTags(tagPairs.existing.concat(created), uploaded._id)
           } catch (error) { throw error }
-          
-          closePrompt()
-        }}>
+          setLoading(false)
+          closePrompt()}}
+        >
+
+          <h3>{"Files < 16 MB supported"}</h3>
           <label>
             <input type="file" onChange={(event) => {
               console.log(event.target.files[0])
@@ -106,9 +141,61 @@ function UploadPrompt({closePrompt, user_id}){
             }}/>
           </label>
           <input type="text" placeholder="Give your dataset a name" name="given_name"/><br/>
-          <button type="submit" disabled={!file}>Upload</button><br/>
-        </form>
-      </Backdrop>
+          
+          <br/><Autocomplete
+            multiple
+            id="tags-select"
+            options={tags.options}
+            getOptionLabel={(option) => option.name}
+            renderOption={(props, option) => (
+                <li {...props} key={option._id}>
+                  {option.name}
+                </li>
+              )}
+            /* MUI tags, not our tags */
+            renderTags={(tagValue, getTagProps) => tagValue.map((option, index) => (
+                <Chip {...getTagProps({ index })} key={option._id} label={option.name} />
+              ))}
+            renderInput={(params) => <TextField {...params} label="Tags" />}
+            onChange={(event, value) => {
+              event.preventDefault()
+              console.log(value)
+              if (value) {
+                setTags({...tags, selected: value})
+              }
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                setTags({...tags, selected: [...tags.selected, {name: event.target.value, new : true}]})
+              }
+            }}
+          /> <br/>
+
+          <Grid container justifyContent="center" alignItems="center">
+            {tags.selected.map((tag, index) => (
+              <Grid item key={`${index}-${tag.name}`}>
+                <TextField
+                  label={`${tag.name} ${tag.new ? "(new)" : ""}`}
+                  value={ assigns.get(tag) || "" }
+                  onChange={(event) => {
+                    const value = event.target.value
+                    setAssigns((prev) => new Map(prev.set(tag, value)))
+                  }}/>
+              </Grid>))
+            }
+          </Grid>
+
+
+          <button type="submit" disabled={!file}>Upload</button><br/>  
+
+        </form><br/>
+        <button onClick= { () => {
+          setFile(null)
+          setTags({})
+          closePrompt()
+        }}>Cancel</button>
+      </Backdrop>}
     </Prompt>
   )
 } 
@@ -116,75 +203,5 @@ function UploadPrompt({closePrompt, user_id}){
 
 
 
-
-// Search Bar Component
-const Bar = styled(TextField)({ // Styling
-  minWidth: '123ch',
-})
-const Submit = styled(Button)({
-  height: '100%',
-})
-
-function SearchBar() {
-  const [values, setValues] = useState({
-    query: '',
-    tags: [],
-    selected: []
-  })
-
-  const updateForm = (name) => (event) => {
-    setValues({
-      ...values,
-      [name]: event.target.value
-    })
-  }
-
-  const navigate = useNavigate()
-  const handleSubmit = (event) => {
-    const params = new URLSearchParams({
-      query: values.query,
-    })
-    values.selected.forEach(tag => params.append('tags', tag))
-    event.preventDefault()
-    console.log(values)
-    navigate(`/data?${params.toString()}`) // TODO: Make use of this in DataView.js to display results
-  }
-
-  return (
-    <div className='home-search'>
-      <form noValidate autoComplete='off'>
-        <Grid container spacing={2} justifyContent = {'center'} alignItems={'stretch'}>
-          <Grid item>
-            <Bar
-              id="search-bar"
-              label="Search Datasets"
-              variant="outlined"
-              type="search"
-              value={values.query}
-              onChange={updateForm("query")}/>
-          </Grid>
-
-          <Grid item>
-            <Submit
-              variant="contained"
-              color="primary"
-              type="submit"
-              onClick={handleSubmit}/>
-          </Grid>
-
-        </Grid>
-
-        <Grid container spacing={2}>
-          <Grid item xs={4}>
-            {/*
-              Tag Dropdown
-             */}
-          </Grid>
-          {/* Map selected tags to grid items, with a button to remove each tag */}
-        </Grid>
-      </form>
-    </div>
-  )
-}
 
 export default Home;

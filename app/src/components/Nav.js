@@ -1,16 +1,16 @@
 import React from "react";
 import { Outlet, Link } from "react-router-dom";
 
-export default function Nav({ loggedIn, signOut }) {
+export default function Nav({ loggedIn, signOut, isAdmin }) {
   const elements = loggedIn ? (
     <>
-      <button onClick={signOut}>Sign Out</button>
+      {isAdmin && <Link to='/admin' className="NavText"><u>Admin</u></Link>}
+      <button className="SubmitButton" onClick={signOut}>Sign Out</button>
     </>
   ) : (
     <>
-      <Link to='/log-in'>Log In</Link>
-      <Link to='/sign-up'>Sign Up</Link>
-      <Link to='/Admin'>Admin</Link>
+      <Link to='/log-in' className="NavText">Log In</Link>
+      <Link to='/sign-up' className="NavText">Sign Up</Link>
 
       <Outlet />
     </>
@@ -19,7 +19,7 @@ export default function Nav({ loggedIn, signOut }) {
   return (
     <>
       <nav>
-        <Link to='/data'>Browse</Link>
+        <Link to='/data' className="NavText">Browse</Link>
         {elements}
       </nav>
 
