@@ -15,11 +15,11 @@ const Prompt = styled(Grid)({
 })
   
 const Backdrop = styled(Grid)({
-backgroundColor: 'white',
-padding: '2em',
-borderRadius: '1em',
-width: 'fit-content',
-height: 'fit-content',
+    backgroundColor: 'white',
+    padding: '2em',
+    borderRadius: '1em',
+    width: 'fit-content',
+    height: 'fit-content',
 })
 
 function renderRow(props, downloads, sourced, setPrompt) {
@@ -40,14 +40,21 @@ export default function Downloaded({user_id : user_id}) {
     useEffect(() => {
         axios.get(`http://localhost:${process.env.REACT_APP_BACK_PORT||9000}/getTransactions`, { params: { user_id: user_id, up: false } })
             .then(response => {
-                setDownloads(response.data);
+                console.log(response.data)
+                setDownloads(response.data.sort((a, b) => new Date(a.timeStamp) - new Date(b.timeStamp)));
             })
             .catch(error => {
                 console.error('There was an error fetching downloads!', error);
             });
         axios.get(`http://localhost:${process.env.REACT_APP_BACK_PORT||9000}/getUserSources`, { params: { user_id: user_id } })
             .then(response => {
-            setSourced(response.data.reduce(({map, source}) => ({...map, [source.file_id]: source}), {}));
+            console.log("!!!!", response.data)
+        
+            let map = {};
+            response.data.forEach((source) => {
+                map[source.file_id] = source;     
+            });
+            setSourced(map);
             })
             .catch(error => {
             console.error('There was an error fetching user sources!', error);
@@ -65,7 +72,6 @@ export default function Downloaded({user_id : user_id}) {
                     height={500}
                     itemSize={35}
                     itemCount={downloads.length}
-
                 >
                     {(props) => renderRow(props, downloads, sourced, setPrompt)}
                 </List>

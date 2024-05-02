@@ -4,9 +4,10 @@ const express = require('express')
 const User = require('./User')
 const app = express()
 const cors = require('cors')
-const multer = require('multer');
+const multer = require('multer')
 const upload = multer({ storage: multer.memoryStorage() })
-
+const GoogleDriveStorage = require('../services/GoogleDriveStorage')
+const { google } = require('googleapis')
 const File = require('./File.js')
 const Tag = require('./Tag.js')
 const Tagged = require('./Tagged.js')
@@ -15,11 +16,47 @@ const Admin = require('./Admin.js')
 const UserSource = require('./UserSource.js')
 const { default: mongoose } = require('mongoose')
 
+app.use(express.json())
+const axios = require('axios');
+
+
+const oAuth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    `http://localhost:${port}/oauth2callback`
+);
+oAuth2Client.setCredentials({
+    refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+});
+
+//const storageProvider = new GoogleDriveStorage(null);
+
+async function getFileMetadata(url) {
+  try {
+    const response = await axios.head(url);
+    
+    return response.headers;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function getFileData(url) {
+    try {
+    
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      return response.data;
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
 const middlewares = {
     empty: upload.none(),   //(req, res, next) => next(),
     uploadSingle: upload.single('file'),
 }
+
+
 
 const endpoints = {
     get: {
@@ -115,8 +152,8 @@ const endpoints = {
                             match = await Tagged.find().populate('file_id', '-data').populate('tag_id')
                         } else {
                             mongoose.set('debug', true)
-                            const foundTag = await Tag.findOne({name: tag.name})
-                            match = await Tagged.find({'tag_id': foundTag._id, value: value }).populate('file_id', '-data').populate('tag_id')
+                            const foundTag = await Tag.findOne({name: {$regex: new RegExp(tag.name, "i")}})
+                            match = await Tagged.find({'tag_id': foundTag._id, value: {$regex: new RegExp(value, "i")} }).populate('file_id', '-data').populate('tag_id')
                             console.log(match)
                             mongoose.set('debug', false)
                         }
@@ -159,13 +196,42 @@ const endpoints = {
             handler: async (req, res) => {
                 try {
                     const file = await File.findById(req.params.file_id)
-                    res.set({
-                        'Content-Type': file.mimetype,
-                        'Content-Disposition': `attachment; filename=${file.file_name}`,
-                    })
+                    console.log(file.mimetype)
+                    
                     const details = parseInt(req.params.recipient_id) != 0 ? {file_id: file._id, user_id: req.params.recipient_id} : {file_id: file._id}
                     await Transaction.create(details)
-                    res.send(file.data)
+
+                    if (file.data) {
+                        res.set({
+                            'Content-Type': file.mimetype,
+                            'Content-Disposition': `attachment; filename=${file.file_name}`,
+                        })
+                        res.send(file.data)
+                    } else {
+                        const sources = await UserSource.find({file_id: file._id, verified: true}).sort({timeStamp: -1})
+                        var content_type = null
+                        
+                        var data
+                        for(const source of sources){
+                            try {
+                                data = await getFileData(source.link)
+                                if (source.content_type) content_type = source.content_type
+                                break
+                            } catch (error) {
+                                source.verified = false
+                                await source.save()
+                            }
+                        }
+                        if(data){
+                            res.set({
+                                'Content-Type': content_type || 'text/plain',
+                                'Content-Disposition': `attachment; filename=${file.file_name}`,
+                            })
+                            res.send(data)
+                        } else
+                            res.status(404).send('All sources are down!')
+                            
+                    }
                 } catch (error) {
                     console.log(error)
                     res.status(500).send(error)
@@ -209,6 +275,10 @@ const endpoints = {
             handler: async (req, res) => {
                 try {
                     const userSource = await UserSource.find(req.query)
+                    userSource.filter(source => typeof source.content_type == 'undefined').forEach(async source => {
+                        source.content_type = (await getFileMetadata(source.link))['content-type'] || 'text/plain'
+                        await source.save()
+                    })
                     res.send(userSource)
                 } catch (error) {
                     console.log(error)
@@ -233,24 +303,36 @@ const endpoints = {
         },
         uploadFile: {
             handler: async (req, res) => {
+                var file;
                 try {
-                    const { originalname, size, buffer } = req.file;
-                    const file = new File({
-                        file_name: originalname,
-                        file_size: size,
-                        data: buffer,
-                        uploader_id: req.params.uploader_id
-                    });
-                    await file.save();
+                    if (req.file){
+                        const { originalname, size, buffer } = req.file;
+                        file = new File({
+                            file_name: originalname,
+                            file_size: size,
+                            data: buffer,
+                            uploader_id: req.params.uploader_id
+                        })
+                    } else if (req.params.link){
+                        const metadata = await getFileMetadata(decodeURIComponent(req.params.link))
+                        console.log(metadata)
+                        const type = metadata ? metadata['content-type'].split(';')[0].split('/') : ['generic', 'txt']
+                        file = new File({
+                            file_name: metadata['content-disposition'].split(';')[1].replaceAll("\"", "").split('=')[1] || `${type[0]}_file.${type[1]}`,
+                            file_size: metadata['content-length'],
+                            uploader_id: req.params.uploader_id
+                        })
+                        await UserSource.create({user_id: req.params.uploader_id, file_id: file._id, link: req.params.link, content_type: metadata['content-type'] || 'text/plain'})
+                    } else throw 'No file or link provided'
 
+                    await file.save()
                     await Transaction.create({up: true, file_id: file._id, user_id: req.params.uploader_id})
-
-                    res.send(file);
+                    res.send(file)
                 } catch (error) {
-                    console.error(error);
-                    res.status(500).send('Error uploading file');
+                    console.error(error)
+                    res.status(500).send('Error uploading file')
                 }
-            }, middleware: middlewares.uploadSingle, urlParams: 'uploader_id'
+            }, middleware: middlewares.uploadSingle, urlParams: 'uploader_id/:link?'
         },
         createTag: {
             handler: async (req, res) => {
@@ -311,6 +393,7 @@ const endpoints = {
                 }
             }
         },
+
         
     },
     

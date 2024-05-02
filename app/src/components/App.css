@@ -105,6 +105,13 @@ color: #424770;
 margin-bottom: 20px;
 }
 
+.title2 {
+text-align: center;
+font-size: 24px;
+color: #3f9379;
+margin-bottom: 20px;
+}
+
 /* Card */
 .card-container {
 display: flex;
@@ -121,12 +128,27 @@ overflow: hidden;
 transition: transform 0.3s, box-shadow 0.3s;
 }
 
+.card2 {
+background: white;
+box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+border-radius: 10px;
+overflow: hidden;
+transition: transform 0.3s, box-shadow 0.3s;
+}
+
 .card:hover {
 transform: translateY(-7px);
 }
 
 .card-header {
 background-color: #5c67a3;
+color: white;
+padding: 10px 15px;
+font-size: 18px;
+}
+
+.card-header2 {
+background-color: #5ca387;
 color: white;
 padding: 10px 15px;
 font-size: 18px;
@@ -162,20 +184,38 @@ text-align: center;
 }
 
 .button:hover {
-background-color: #76a6f0;
+background-color: #a8b0f9;
 }
 
-/* Go Home Link */
+/* Go Home Link Data View*/
 .link {
 display: block;
 text-align: center;
 margin-top: 20px;
+margin-bottom:20px;
 text-decoration: none;
-color: #5c67a3;
+color: #391e5a;
 font-weight: bold;
 transition: color 0.2s;
 }
 
 .link:hover {
 color: #424770;
+}
+
+/* Go Home Link Admin*/
+.link2 {
+display: block;
+text-align: center;
+margin-top: 20px;
+margin-bottom:20px;
+text-decoration: none;
+color: #19691d;
+font-weight: bold;
+transition: color 0.2s;
+}
+
+.link2:hover {
+color: #65b168;
+;
 }

@@ -85,6 +85,7 @@ const Backdrop = styled(Grid)({
 
 function UploadPrompt({closePrompt, user_id}){
   const [file, setFile] = useState(null)
+  const [link, setLink] = useState("")
   const [tags, setTags] = useState({options: [], selected: []})
   const [assigns, setAssigns] = useState(new Map()) // {tag obj -> value}
 
@@ -115,7 +116,7 @@ function UploadPrompt({closePrompt, user_id}){
     }
     return {existing: existing, new: newTags}
   }
-  
+
   return (
     <Prompt container justifyContent="center" alignItems="center">
       
@@ -130,7 +131,7 @@ function UploadPrompt({closePrompt, user_id}){
           console.log("<<DD>>", [...Array.from(assigns).map(([tag, value]) => ({tag: tag, value: value})) , nameTag])
           const tagPairs = await checkTags([...Array.from(assigns).map(([tag, value]) => ({tag: tag, value: value})) , nameTag]) // chosen tags => { existing: [...], new: [...] }
           console.log(tagPairs)
-          const uploaded = await handleUpload(file, user_id)
+          const uploaded = await handleUpload(user_id, file, link)
           console.log(uploaded)
           
           const created = await handleCreateTags(tagPairs.new, user_id)
@@ -147,9 +148,15 @@ function UploadPrompt({closePrompt, user_id}){
             <input type="file" onChange={(event) => {
               console.log(event.target.files[0])
               setFile(event.target.files[0])
-            }}/>
-          </label>
-          <input type="text" placeholder="Give your dataset a name" name="given_name"/><br/>
+            }}/><br/>
+
+          </label><br/>
+          <input type="text" placeholder="Give your dataset a name" name="given_name"/><br/>  
+          <TextField
+            label="or provide a direct link to download"
+            style={{width: '50ch', marginTop: '1em'}}
+            value={link}
+            onChange={(event) => setLink(event.target.value)}/><br/>
           
           <br/><Autocomplete
             multiple
@@ -196,7 +203,7 @@ function UploadPrompt({closePrompt, user_id}){
           </Grid>
 
 
-          <button type="submit" disabled={!file}>Upload</button><br/>  
+          <button type="submit" disabled={!file && !link}>Upload</button><br/>  
 
         </form><br/>
         <button onClick= { () => {

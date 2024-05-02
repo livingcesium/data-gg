@@ -42,28 +42,29 @@ export const handleSignOut = (event, redirect) => {
       redirect();
   };
 
-export const handleUpload = async (file, uploader_id) => {
-  const data = new FormData();
-  data.append('file', file);
+export const handleUpload = async (uploader_id, file, link) => {
+  const data = new FormData()
+  file && data.append('file', file)
   
   try {
-    const res = await axios.post(`http://localhost:${backendPort}/uploadFile/${uploader_id}`, data, {
+    const res = await axios.post(`http://localhost:${backendPort}/uploadFile/${uploader_id}/${encodeURIComponent(link) || ""} `, data, {
       headers: {'Content-Type': 'multipart/form-data'}
     });
-    console.log(res);
-    return res.data;
+    console.log(res)
+    return res.data
   } catch (err) {
-    console.log(err);
-    alert('Error in uploading file');
+    console.log(err)
+    alert('Error in uploading file')
   }
 
-};
+}
 
-export const handleDownload = (file_id, file_name, user_id) => {
+export const handleDownload = (file_id, file_name, user_id, after=()=>{}) => {
   axios.get(`http://localhost:${backendPort}/getFileData/${file_id}/${user_id || 0}`, { responseType: 'blob' })
     .then((res) => {
       console.log(res);
       saveAs(res.data, file_name)
+      after()
     })
     .catch((err) => {
       console.log(err);
