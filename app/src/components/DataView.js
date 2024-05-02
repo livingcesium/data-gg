@@ -2,70 +2,64 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { handleDownload } from '../handles';
+import './App.css';
 
 function DataView() {
-  const [results, setResults] = useState([])
-  const backendPort = process.env.BACK_PORT || 9000
-  const loggedIn = localStorage.getItem('loggedInUser')
-  
-  const query = new URLSearchParams(useLocation().search)
+  const [results, setResults] = useState([]);
+  const backendPort = process.env.BACK_PORT || 9000;
+  const loggedIn = localStorage.getItem('loggedInUser');
+
+  const query = new URLSearchParams(useLocation().search);
   useEffect(() => {
-    console.log(results)
-    const searchName = query.get('query')
-    const searchQuery = query.getAll('tags').length ? query.getAll('tags'): []
-    const searchTags = [...searchQuery, searchName ? {tag_id: {name: "name"}, value : searchName} : {tag_id : {name: ""}, value : ""}]
-    axios.get(`http://localhost:${backendPort}/searchFiles`, {params: {tagPairs: searchTags}})
+    const searchName = query.get('query');
+    const searchQuery = query.getAll('tags').length ? query.getAll('tags') : [];
+    const searchTags = [...searchQuery, searchName ? { tag_id: { name: "name" }, value: searchName } : { tag_id: { name: "" }, value: "" }];
+    axios.get(`http://localhost:${backendPort}/searchFiles`, { params: { tagPairs: searchTags } })
       .then(res => {
-        console.log(Object.values(res.data))
-        setResults(Object.values(res.data))
+        
+//Sorts the Results from most recent to least recent 
+        const sortedResults = Object.values(res.data).sort((a, b) => new Date(b.file.timestamp) - new Date(a.file.timestamp));
+        setResults(sortedResults);
       })
       .catch(err => {
-        console.error('Failed to fetch results', err)
-        alert('Failed to fetch results')
-      })
-    
-  }, []); // Empty dependency array means this effect runs once on mount
+        console.error('Failed to fetch results', err);
+        alert('Failed to fetch results');
+      });
+  }, []);
 
   return (
-    <div>
-      <h1>Results</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Given Name</th>
-            <th>File Name</th>
-            <th>File Size</th>
-            <th>Date Uploaded</th>
-            <th>Uploaded By</th>
-            <th>Download</th>
-          </tr>
-        </thead>
-        <Results content={results} recipient_id = {loggedIn || ""}/>
-      </table>
-      <Link to='/home'>Go Home</Link>
+    <div className="body">
+      <h1 className="title">Results</h1>
+      <Link to="/home" className="link">Go Home</Link>
+      <div className="card-container">
+        {results.map(({ file, tags }, index) => (
+          <div key={index} className="card">
+            <div className="card-header">{tags["name"].value}</div>
+            <div className="card-content">
+              <div className="detail">
+                <span className="detail-label">File Name:</span>
+                <span>{file.file_name}</span>
+              </div>
+              <div className="detail">
+                <span className="detail-label">File Size:</span>
+                <span>{file.file_size} B</span>
+              </div>
+              <div className="detail">
+                <span className="detail-label">Date Uploaded:</span>
+                <span>{new Date(file.timestamp).toLocaleString()}</span>
+              </div>
+              <div className="detail">
+                <span className="detail-label">Uploaded By:</span>
+                <span>{file.uploader.username}</span>
+              </div>
+              <button className="button" onClick={() => handleDownload(file._id, file.file_name, loggedIn)}>Download Dataset</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Link to="/home" className="link">Go Home</Link>
     </div>
   );
-}
-
-function Results({content, recipient_id}){
-  return (
-    <tbody>
-      {content.map(({file, tags}) => (
-        file && tags && <tr key={file._id}>
-          <td>{tags["name"].value}</td>
-          <td>{file.file_name}</td>
-          <td>{file.file_size + " B"}</td>
-          <td>{file.timestamp + " UTC"}</td>
-          <td>{file.uploader.username}</td>
-          <td><button onClick={(event) => {
-            event.preventDefault()
-            handleDownload(file._id, file.file_name, recipient_id)
-          }}>Download Dataset</button></td>
-
-        </tr>
-      ))}
-    </tbody>
-  )
 }
 
 export default DataView;
