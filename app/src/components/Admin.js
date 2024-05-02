@@ -9,7 +9,7 @@ function Admin() {
     const [transactions, setTransactions] = useState([]);
     const isAdmin = localStorage.getItem('admin') ? true : false;
     useEffect(() => {
-      axios.get(`http://localhost:${process.env.REACT_APP_BACK_PORT || 9000}/getTransactions`)
+      axios.get(`http://localhost:${process.env.REACT_APP_BACK_PORT || 9000}/getUsersTransactions`)
           .then(response => {
               setTransactions(response.data);
           })

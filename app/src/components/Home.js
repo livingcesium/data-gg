@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Nav from './Nav'
 import SearchBar from './SearchBar'
+import Downloaded from './Downloaded'
 import { handleSignOut, handleUpload, handleCreateTags, handleGetTag, handleGetTags, handleAttachTags } from '../handles'
 import { Grid, Button, TextField, CircularProgress } from '@mui/material'
 import { Autocomplete, Chip } from '@mui/material'
@@ -16,7 +17,7 @@ function Home() {
   const [uploadOpen, setUploadOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   useEffect(() => {
-    axios.get(`http://localhost:${process.env.REACT_APP_BACK_PORT || 9000}/getAdmin`, { params: { user_id: loggedIn } })
+    axios.get(`http://localhost:${process.env.REACT_APP_BACK_PORT||9000}/getAdmin`, { params: { user_id: loggedIn } })
         .then(response => {
             if (response.data) {
                 setIsAdmin(true);
@@ -30,12 +31,24 @@ function Home() {
   
 
   const elements = loggedIn ? 
-    <>
-      <p>{`Welcome ${loggedIn}!`}</p>
-      <button type="button" onClick={redirectAfterSignOut}>Sign Out</button> { }
-      <button type="button" onClick={() => setUploadOpen(true)}>Upload Data</button><br/>
+    <Grid container  justifyContent={'center'}>
+      
+      <Grid xs direction={'column'} container item justifyContent={'center'} alignItems={'stretch'}>
+        <h2>Your Downloads</h2>
+        <Downloaded user_id={loggedIn}/>
+      </Grid>
 
-    </>
+      <Grid xs={6} direction={'column'} container item justifyContent={'center'} alignItems={'center'}>
+        <p>{`Welcome ${loggedIn}!`}</p>
+        <button type="button" onClick={redirectAfterSignOut}>Sign Out</button> { }
+        <button type="button" onClick={() => setUploadOpen(true)}>Upload Data</button><br/>
+      </Grid>
+
+      <Grid xs direction={'column'} container item justifyContent={'center'} alignItems={'center'}>
+        
+      </Grid>
+
+    </Grid>
   : 
     <>
       <p>Already have an account? <Link to="/log-in">Login</Link></p> <br/>
