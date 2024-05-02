@@ -41,7 +41,7 @@ export default function SearchBar() {
         console.log("SUBMITING:", values)
         navigate(`/data?${params.toString()}`) // TODO: Make use of this in DataView.js to display results
     }
-
+    
     const updateForm = (name) => (selectedOption) => {
         setValues({
             ...values,

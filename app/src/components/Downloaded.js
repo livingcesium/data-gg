@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios';
-import { ListItem, ListItemText, Box, Button, Grid } from '@mui/material'
+import { ListItem, ListItemText, Box, Button, Grid, TextField } from '@mui/material'
 import { FixedSizeList as List } from 'react-window'
 import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/system'
@@ -56,7 +56,7 @@ export default function Downloaded({user_id : user_id}) {
     
     return (
         <>
-            {prompt ?? <SourcePrompt file_id={prompt.file_id} user_id={user_id} closePrompt={() => setPrompt(false)} />}
+            {prompt && <SourcePrompt file_id={prompt.file_id} user_id={user_id} closePrompt={() => setPrompt(false)} />}
             <Box sx={{ maxWidth: '30vw' }}>
                 {console.log(downloads)}
                 <List
@@ -77,7 +77,7 @@ export default function Downloaded({user_id : user_id}) {
         const [link, setLink] = useState('')
 
         const handleSubmit = () => {
-            axios.post(`http://localhost:${process.env.REACT_APP_BACK_PORT||9000}/addSource`, { user_id: user_id, file_id: file_id, link: link })
+            axios.post(`http://localhost:${process.env.REACT_APP_BACK_PORT||9000}/addUserSource`, { user_id: user_id, file_id: file_id, link: link })
                 .then(response => {
                     console.log(response.data)
                     closePrompt()
@@ -91,7 +91,7 @@ export default function Downloaded({user_id : user_id}) {
             <Prompt container justifyContent="center" alignItems="center">
                 <Backdrop>
                     <h1>Become a Source</h1>
-                    <p>Would you like to become a source for this file?</p>
+                    <p>Would you like to become a source for this file?</p><br/>
                     <TextField
                         label="Link"
                         variant="outlined"

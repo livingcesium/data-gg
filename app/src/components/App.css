@@ -35,13 +35,14 @@
 
 .List{
   text-align: left;
-
+  display: block; /* input fields are block elements */
+  margin: 10px auto; /* Centers the input fields horizontally and adds vertical spacing */
   width: 70%; /* width of the input field */
   max-width: 300px; /* Prevents the input fields from stretching too wide */
   padding: 10px 20px; /* Adds padding to the inputs */
   border-radius: 30px; /* Rounded corners for the input fields */
   border: 1px solid #ccc; /* border  */
-  background-color: rgb(181, 218, 249); /* background color */
+  background-color: rgb(181, 193, 249); /* background color */
   color: #000000; /* Text Color  */
   font-size: 16px; /* font size */
   outline: none; /* Removes the outline */
@@ -50,23 +51,23 @@
 nav {
   height: 90px;
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-between;
   align-items: center;
   flex-direction: row;
   background-color: #000000;
   width: 100%;
-  text-align: center; 
-  overflow: visible;
+  
 }
 
 .NavText {
-  padding: 10px 20px;
   color: white;
   text-decoration: none; /* Removes underline */
   font-weight: bold; /* Makes text bold */
 }
 
 .Nav2 {
+
+
   height: 90px;
   display: flex;
   align-items: center;
@@ -79,7 +80,6 @@ nav {
 }
 
 .BG1 {
-
   width: 100%; /* full width */
   top: 0;
   left: 0;
@@ -87,4 +87,95 @@ nav {
   bottom: 0;
   object-fit: cover; /* Cover the available space without losing aspect ratio */
   height: calc(100vh - 180px); /* Subtract the combined height of the two navbars */
+}
+
+/* General Layout */
+.body {
+font-family: 'Poppins', sans-serif;
+background: #f4f6f8;
+margin: 0;
+padding: 20px;
+color: #333;
+}
+
+.title {
+text-align: center;
+font-size: 24px;
+color: #424770;
+margin-bottom: 20px;
+}
+
+/* Card */
+.card-container {
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+gap: 20px;
+}
+
+.card {
+background: white;
+box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+border-radius: 10px;
+overflow: hidden;
+transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+transform: translateY(-7px);
+}
+
+.card-header {
+background-color: #5c67a3;
+color: white;
+padding: 10px 15px;
+font-size: 18px;
+}
+
+.card-content {
+padding: 15px;
+}
+
+.detail {
+margin-bottom: 8px;
+display: flex;
+justify-content: space-between;
+font-size: 16px;
+}
+
+.detail-label {
+font-weight: 500;
+}
+
+/* Download Dataset Button  */
+.button {
+padding: 10px 20px;
+background-color: #424770;
+color: white;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+transition: background-color 0.2s;
+display: block;
+width: 100%;
+text-align: center;
+}
+
+.button:hover {
+background-color: #76a6f0;
+}
+
+/* Go Home Link */
+.link {
+display: block;
+text-align: center;
+margin-top: 20px;
+text-decoration: none;
+color: #5c67a3;
+font-weight: bold;
+transition: color 0.2s;
+}
+
+.link:hover {
+color: #424770;
 }

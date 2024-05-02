@@ -299,6 +299,19 @@ const endpoints = {
                     }
             }
         },
+        addUserSource: {
+            handler: async (req, res) => {
+                try {
+                    const userSource = new UserSource(req.body)
+                    await userSource.save()
+                    res.send(userSource)
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send(error)
+                }
+            }
+        },
+        
     },
     
 }
