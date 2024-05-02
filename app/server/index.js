@@ -80,11 +80,22 @@ const endpoints = {
                 }
             }    
         },
-        getTags: {
+        getTagged: {
             handler: async (req, res) => {
                 try {
                     const tags = await Tag.find(req.query)
                     res.send(tags)
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send(error)
+                }
+            }
+        },
+        getTags: {
+            handler: async (req, res) => {
+                try {
+                    const tagged = await Tag.find(req.query).populate('tag_id')
+                    res.send(tagged)
                 } catch (error) {
                     console.log(error)
                     res.status(500).send(error)
@@ -160,10 +171,21 @@ const endpoints = {
                 }
             }, urlParams: 'file_id/:recipient_id'
         },
+        getUsersTransactions: {
+            handler: async (req, res) => {
+                try {
+                    const transactions = await Transaction.find(req.params).populate('user_id', '-password').populate('file_id', '-data')
+                    res.send(transactions)
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send(error)
+                }
+            }
+        },
         getTransactions: {
             handler: async (req, res) => {
                 try {
-                    const transactions = await Transaction.find(req.params).populate('user_id')
+                    const transactions = await Transaction.find(req.params).populate('file_id', '-data')
                     res.send(transactions)
                 } catch (error) {
                     console.log(error)
