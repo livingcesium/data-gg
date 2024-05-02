@@ -12,6 +12,7 @@ const Tag = require('./Tag.js')
 const Tagged = require('./Tagged.js')
 const Transaction = require('./Transaction.js')
 const Admin = require('./Admin.js')
+const UserSource = require('./UserSource.js')
 const { default: mongoose } = require('mongoose')
 
 
@@ -83,7 +84,7 @@ const endpoints = {
         getTagged: {
             handler: async (req, res) => {
                 try {
-                    const tags = await Tag.find(req.query)
+                    const tags = await Tagged.find(req.query).populate('tag_id')
                     res.send(tags)
                 } catch (error) {
                     console.log(error)
@@ -94,7 +95,7 @@ const endpoints = {
         getTags: {
             handler: async (req, res) => {
                 try {
-                    const tagged = await Tag.find(req.query).populate('tag_id')
+                    const tagged = await Tag.find(req.query)
                     res.send(tagged)
                 } catch (error) {
                     console.log(error)
@@ -198,6 +199,17 @@ const endpoints = {
                 try {
                     const admin = await Admin.findOne(req.query)
                     res.send(admin)
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).send(error)
+                }
+            }
+        },
+        getUserSources: {
+            handler: async (req, res) => {
+                try {
+                    const userSource = await UserSource.find(req.query)
+                    res.send(userSource)
                 } catch (error) {
                     console.log(error)
                     res.status(500).send(error)
