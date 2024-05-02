@@ -115,10 +115,6 @@ function UploadPrompt({closePrompt, user_id}){
     }
     return {existing: existing, new: newTags}
   }
-
-  const removeTag = (tag) => {
-    setTagOptions(tagOptions.map(group => group.filter((tagPair) => tagPair.tag._id !== tag._id)))
-  }
   
   return (
     <Prompt container justifyContent="center" alignItems="center">
